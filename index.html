@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>osu! User Lookup</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons CDN (still used for download buttons) -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts: Inter (for general text) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -125,18 +122,15 @@
         </div>
 
         <div id="errorMessage" class="hidden bg-red-800 text-red-100 p-4 rounded-lg mt-6 border border-red-700">
-            <!-- Error messages will be displayed here -->
-        </div>
+            </div>
 
         <div id="userInfo" class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- User information will be displayed here -->
-        </div>
+            </div>
 
         <div id="bestPlaysSection" class="hidden mt-8">
             <h2 class="text-3xl font-bold text-center mb-6 text-zinc-300">Best Performance Plays</h2>
             <div id="bestPlays" class="grid grid-cols-1 gap-4">
-                <!-- Best performance plays will be displayed here -->
-            </div>
+                </div>
         </div>
     </div>
 
@@ -144,7 +138,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Your osu! API Key (v1) for general user data and best plays.
             // IMPORTANT: This key has been updated with the one you provided.
-            const OSU_API_KEY = "9b5e32c38abbac978fd95dc322fadb7c7be07b53";
+            const OSU_API_KEY = "9b5e32c38abbac978fd95dc322fadb7c7be07b53"; // Keep your key here
 
             const usernameInput = document.getElementById('usernameInput');
             const searchButton = document.getElementById('searchButton');
@@ -256,23 +250,32 @@
                 searchButton.classList.remove('opacity-50', 'cursor-not-allowed');
             }
 
+            // MODIFIED downloadReplay function
             async function downloadReplay(beatmapId, userId, mode, username, beatmapName) {
                 showLoading();
                 try {
+                    // It's crucial to understand that the osu! API v1's get_replay endpoint
+                    // is often unreliable. It might return empty data or an error for valid plays.
+                    // There's no robust public API v1 way to get all replays.
+                    // This often results in "Replay data not found" as the data field is empty.
                     const replayApiUrl = `https://osu.ppy.sh/api/get_replay?k=${OSU_API_KEY}&m=${mode}&b=${beatmapId}&u=${userId}&type=string`;
                     const response = await fetch(replayApiUrl);
 
                     if (!response.ok) {
-                        displayError(`Failed to fetch replay for ${beatmapName}. Status: ${response.status}`);
+                        // Handle HTTP errors (e.g., 404, 500 from API server)
+                        displayError(`Failed to fetch replay for ${beatmapName}. Server responded with status: ${response.status} ${response.statusText}.`);
                         return;
                     }
 
-                    const data = await response.json();
-                    if (!data || !data.content) {
-                        displayError(`Replay data not found for ${beatmapName}.`);
+                    const data = await response.json(); // Data is expected to be { content: "base64encodedString" } or empty
+
+                    // Check if 'data' is an empty array or if 'content' property is missing/empty
+                    if (!data || data.length === 0 || !data.content) {
+                        displayError(`Replay data not found or is empty for ${beatmapName}. This often happens with older plays or if the replay is not publicly available via osu! API v1.`);
                         return;
                     }
 
+                    // Decode base64 content
                     const replayContent = atob(data.content);
                     const byteCharacters = new Uint8Array(replayContent.length);
                     for (let i = 0; i < replayContent.length; i++) {
@@ -288,20 +291,23 @@
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-
+                    clearError(); // Clear error if download was successful
                 } catch (error) {
                     console.error('Error downloading replay:', error);
-                    displayError(`Error downloading replay for ${beatmapName}.`);
+                    displayError(`An unexpected error occurred while trying to download replay for ${beatmapName}.`);
                 } finally {
                     hideLoading();
                 }
             }
 
             function downloadBeatmap(beatmapId, beatmapName) {
+                // For direct .osu download, we don't need the API key or complex fetching.
+                // The /osu/beatmap_id endpoint serves the .osu file directly.
                 const downloadUrl = `https://osu.ppy.sh/osu/${beatmapId}`;
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = `${beatmapName}.osu`;
+                // Suggest a filename, but the server will ultimately decide (usually sends the correct one)
+                a.download = `${beatmapName}.osu`; 
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -465,6 +471,7 @@
                                         data-user-id="${user.user_id}"
                                         data-mode="${play.mode}"
                                         data-username="${user.username}"
+                                        data-beatmap-name="${beatmapTitle}"
                                     >
                                         <i data-lucide="download" class="icon inline-block mr-2"></i> Replay
                                     </button>
