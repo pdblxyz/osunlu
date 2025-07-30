@@ -282,12 +282,12 @@
                             <p class="text-lg"><strong style="color: #4EB604;">Accuracy:</strong> <span class="text-zinc-200">${parseFloat(user.accuracy).toFixed(2)}%</span></p>
                         </div>
                         <div class="bg-zinc-800 p-4 rounded-lg shadow-md border border-zinc-700">
-                            <p class="text-lg"><strong class="text-yellow-400">Playcount:</strong> <span class="text-zinc-200">${user.playcount}</span></p>
-                            <p class="text-lg"><strong class="text-yellow-400">Level:</strong> <span class="text-zinc-200">${parseFloat(user.level).toFixed(2)}</span></p>
-                            <p class="text-lg"><strong class="text-yellow-400">Total Score:</strong> <span class="text-zinc-200">${user.total_score}</span></p>
+                            <p class="text-lg"><strong class="text-yellow-400">Playcount:</strong> <span class="text-zinc-200">${parseInt(user.playcount).toLocaleString()}</span></p>
+                            <p class="text-lg"><strong class="text-yellow-400">Level:</strong> <span class="text-zinc-200">${parseInt(user.level)}</span></p>
+                            <p class="text-lg"><strong class="text-yellow-400">Total Score:</strong> <span class="text-zinc-200">${parseInt(user.total_score).toLocaleString()}</span></p>
                         </div>
                         <div class="bg-zinc-800 p-4 rounded-lg shadow-md border border-zinc-700">
-                            <p class="text-lg"><strong style="color: #0280BA;">Ranked Score:</strong> <span class="text-zinc-200">${user.ranked_score}</span></p>
+                            <p class="text-lg"><strong style="color: #0280BA;">Ranked Score:</strong> <span class="text-zinc-200">${parseInt(user.ranked_score).toLocaleString()}</span></p>
                             <p class="text-lg"><strong class="text-yellow-400">SS Count:</strong> <span class="text-zinc-200">${user.count_rank_ss}</span></p>
                             <p class="text-lg"><strong class="text-yellow-600">S Count:</strong> <span class="text-zinc-200">${user.count_rank_s}</span></p>
                             <p class="text-lg"><strong style="color: #4EB604;">A Count:</strong> <span class="text-zinc-200">${user.count_rank_a}</span></p>
@@ -295,7 +295,7 @@
                         <div class="bg-zinc-800 p-4 rounded-lg shadow-md border border-zinc-700">
                             <p class="text-lg"><strong class="text-red-500">Join Date:</strong> <span class="text-zinc-200">${user.join_date}</span></p>
                             <p class="text-lg"><strong class="text-red-500">Country:</strong> <span class="text-zinc-200">${user.country}</span></p>
-                            <p class="text-lg"><strong class="text-red-500">Total Hits:</strong> <span class="text-zinc-200">${parseInt(user.count300) + parseInt(user.count100) + parseInt(user.count50)}</span></p>
+                            <p class="text-lg"><strong class="text-red-500">Total Hits:</strong> <span class="text-zinc-200">${(parseInt(user.count300) + parseInt(user.count100) + parseInt(user.count50)).toLocaleString()}</span></p>
                         </div>
                     `;
 
@@ -363,7 +363,7 @@
                                     <div class="flex flex-wrap gap-x-4 gap-y-1 text-md text-zinc-300">
                                         <span><strong class="text-zinc-300">PP:</strong> <span class="text-zinc-200">${parseFloat(play.pp).toFixed(2)}</span></span>
                                         <span><strong style="color: #4EB604;">Accuracy:</strong> <span class="text-zinc-200">${calculatedAccuracy}%</span></span>
-                                        <span><strong class="text-zinc-300">Score:</strong> <span class="text-zinc-200">${play.score}</span></span>
+                                        <span><strong class="text-zinc-300">Score:</strong> <span class="text-zinc-200">${parseInt(play.score).toLocaleString()}</span></span>
                                         <span><strong class="text-zinc-300">Mods:</strong> <span class="text-zinc-200">${modString}</span></span>
                                         <span><strong class="text-zinc-300">Date:</strong> <span class="text-zinc-200">${play.date}</span></span>
                                     </div>
