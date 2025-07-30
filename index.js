@@ -29,7 +29,7 @@ const OSU_OAUTH_TOKEN_URL = 'https://osu.ppy.sh/oauth/token';
 // This middleware allows your Netlify frontend to make requests to this Replit backend.
 // IMPORTANT: The origin is set to your Netlify domain.
 app.use(cors({
-    origin: 'https://earnest-brioche-283f26.netlify.app', // <--- UPDATED TO YOUR NETLIFY DOMAIN
+    origin: 'https://osunlu.xyz', // <--- UPDATED TO YOUR NETLIFY DOMAIN
     methods: ['GET', 'POST'], // Allow GET and POST requests
     allowedHeaders: ['Content-Type', 'Authorization'] // Allow these headers in requests
 }));
