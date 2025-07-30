@@ -106,6 +106,27 @@
                 transform: translateY(0);
             }
         }
+
+        /* CSS for fade transition on load more buttons */
+        .fade-transition {
+            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+        }
+
+        /* Initial state for load more buttons: hidden but ready for transition */
+        .load-more-button-initial-state {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .fade-in {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -148,7 +169,7 @@
             </div>
             <button
                 id="loadMoreBestPlaysButton"
-                class="hidden w-full bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out shadow-lg mt-4 glow-button"
+                class="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out shadow-lg mt-4 glow-button fade-transition load-more-button-initial-state"
                 data-type="best"
             >
                 Load More Best Plays
@@ -162,7 +183,7 @@
             </div>
             <button
                 id="loadMoreRecentPlaysButton"
-                class="hidden w-full bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out shadow-lg mt-4 glow-button"
+                class="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out shadow-lg mt-4 glow-button fade-transition load-more-button-initial-state"
                 data-type="recent"
             >
                 Load More Recent Plays
@@ -196,6 +217,30 @@
 
             let allRecentPlays = [];
             let currentRecentPlaysIndex = 0;
+
+            // Store the user object globally or pass it to functions that need it
+            let currentUser = null;
+
+            // Helper functions for fade effects
+            function fadeOutElement(element) {
+                element.classList.add('fade-out');
+                element.classList.remove('fade-in');
+                // After the transition, ensure it's truly hidden and not just transparent
+                element.addEventListener('transitionend', function handler() {
+                    element.classList.add('load-more-button-initial-state'); // Revert to initial hidden state
+                    element.removeEventListener('transitionend', handler);
+                }, { once: true });
+            }
+
+            function fadeInElement(element) {
+                element.classList.remove('load-more-button-initial-state'); // Remove initial hidden state
+                // Use a slight delay or requestAnimationFrame to ensure the 'hidden' class is removed
+                // before the opacity transition starts, otherwise it won't animate.
+                requestAnimationFrame(() => {
+                    element.classList.remove('fade-out');
+                    element.classList.add('fade-in');
+                });
+            }
 
             // Function to get the average color of an image
             async function getAverageColor(imageUrl) {
@@ -294,8 +339,11 @@
                 bestPlaysSection.classList.add('hidden');
                 recentPlaysDiv.innerHTML = '';
                 recentPlaysSection.classList.add('hidden');
-                loadMoreBestPlaysButton.classList.add('hidden');
-                loadMoreRecentPlaysButton.classList.add('hidden');
+                // Ensure buttons are hidden immediately when a new search starts
+                loadMoreBestPlaysButton.classList.add('load-more-button-initial-state');
+                loadMoreRecentPlaysButton.classList.add('load-more-button-initial-state');
+                loadMoreBestPlaysButton.classList.remove('fade-in');
+                loadMoreRecentPlaysButton.classList.remove('fade-in');
             }
 
             function hideLoading() {
@@ -351,7 +399,7 @@
                 const downloadUrl = `https://osu.ppy.sh/osu/${beatmapId}`;
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = `${beatmapName}.osu`; 
+                a.download = `${beatmapName}.osu`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -478,7 +526,7 @@
             async function renderPlayCards(playsData, targetDiv, userId, username, startIndex, limit) {
                 // Only clear the div if it's the initial render (startIndex is 0)
                 if (startIndex === 0) {
-                    targetDiv.innerHTML = ''; 
+                    targetDiv.innerHTML = '';
                 }
 
                 const endIndex = Math.min(startIndex + limit, playsData.length);
@@ -510,6 +558,9 @@
                     return; // Invalid type
                 }
 
+                // Fade out the button when clicked
+                fadeOutElement(loadMoreButton);
+
                 // Scroll to the bottom of the current content before new maps are added
                 // This makes the "Load More" button appear at the bottom of the viewport
                 // before the new content is loaded, giving a smoother transition.
@@ -531,11 +582,12 @@
                     currentRecentPlaysIndex = nextIndex;
                 }
 
-                // Hide the "Load More" button if all plays are displayed
+                // Hide the "Load More" button if all plays are displayed, otherwise fade it in
                 if (nextIndex >= playsData.length) {
-                    loadMoreButton.classList.add('hidden');
+                    // Already faded out, just ensure it remains hidden
+                    loadMoreButton.classList.add('load-more-button-initial-state');
                 } else {
-                    loadMoreButton.classList.remove('hidden');
+                    fadeInElement(loadMoreButton);
                 }
             }
 
@@ -574,6 +626,7 @@
                     }
 
                     const user = userData[0];
+                    currentUser = user; // Store the user object
                     const profilePictureUrl = `https://a.ppy.sh/${user.user_id}`;
 
                     // Display user information
@@ -604,90 +657,91 @@
                         <div class="bg-zinc-800 p-4 rounded-lg shadow-md border border-zinc-700">
                             <p class="text-lg"><strong class="text-red-500">Join Date:</strong> <span class="text-zinc-200">${user.join_date}</span></p>
                             <p class="text-lg"><strong class="text-red-500">Country:</strong> <span class="text-zinc-200">${user.country}</span></p>
-                            <p class="text-lg"><strong class="text-red-500">Total Hits:</strong> <span class="text-zinc-200">${(parseInt(user.count300) + parseInt(user.count100) + parseInt(user.count50)).toLocaleString()}</span></p>
+                            <p class="text-lg"><strong class="text-red-500">Total Hits:</strong> <span class="text-zinc-200">${parseInt(user.total_hits).toLocaleString()}</span></p>
                         </div>
                     `;
 
-                    // Fetch best performance plays (limit=100)
-                    const bestPlaysApiUrl = `https://osu.ppy.sh/api/get_user_best?k=${OSU_API_KEY}&u=${user.user_id}&limit=100`;
+                    // Fetch best performance plays
+                    const bestPlaysApiUrl = `https://osu.ppy.sh/api/get_user_best?k=${OSU_API_KEY}&u=${user.user_id}&limit=100`; // Fetch more to allow "load more"
                     const bestPlaysResponse = await fetch(bestPlaysApiUrl);
-                    allBestPlays = await bestPlaysResponse.json(); // Store all 100 plays
+                    allBestPlays = await bestPlaysResponse.json();
+                    currentBestPlaysIndex = 0; // Reset index for new search
 
-                    if (!bestPlaysResponse.ok) {
-                        console.error(`Error fetching best plays: ${bestPlaysResponse.status} ${bestPlaysResponse.statusText}`);
+                    if (allBestPlays && allBestPlays.length > 0) {
+                        bestPlaysSection.classList.remove('hidden');
+                        await renderPlayCards(allBestPlays, bestPlaysDiv, user.user_id, user.username, currentBestPlaysIndex, PLAYS_PER_LOAD);
+                        currentBestPlaysIndex += PLAYS_PER_LOAD;
+
+                        if (allBestPlays.length > PLAYS_PER_LOAD) {
+                            fadeInElement(loadMoreBestPlaysButton);
+                        } else {
+                            fadeOutElement(loadMoreBestPlaysButton); // Ensure hidden if no more plays
+                        }
+                    } else {
                         bestPlaysSection.classList.add('hidden');
-                    } else {
-                        if (allBestPlays.length > 0) {
-                            bestPlaysSection.classList.remove('hidden');
-                            currentBestPlaysIndex = 0; // Reset index
-                            await renderPlayCards(allBestPlays, bestPlaysDiv, user.user_id, user.username, currentBestPlaysIndex, PLAYS_PER_LOAD);
-                            if (allBestPlays.length > PLAYS_PER_LOAD) {
-                                loadMoreBestPlaysButton.classList.remove('hidden');
-                            } else {
-                                loadMoreBestPlaysButton.classList.add('hidden');
-                            }
-                        } else {
-                            bestPlaysSection.classList.add('hidden');
-                        }
+                        bestPlaysDiv.innerHTML = '<p class="text-center text-zinc-400">No best performance plays found.</p>';
+                        fadeOutElement(loadMoreBestPlaysButton); // Ensure hidden
                     }
 
-                    // Fetch Recent Plays (limit=100)
-                    const recentPlaysApiUrl = `https://osu.ppy.sh/api/get_user_recent?k=${OSU_API_KEY}&u=${user.user_id}&limit=100`;
+                    // Fetch recent plays
+                    const recentPlaysApiUrl = `https://osu.ppy.sh/api/get_user_recent?k=${OSU_API_KEY}&u=${user.user_id}&limit=50`; // Fetch more
                     const recentPlaysResponse = await fetch(recentPlaysApiUrl);
-                    allRecentPlays = await recentPlaysResponse.json(); // Store all 100 plays
+                    allRecentPlays = await recentPlaysResponse.json();
+                    currentRecentPlaysIndex = 0; // Reset index for new search
 
-                    if (!recentPlaysResponse.ok) {
-                        console.error(`Error fetching recent plays: ${recentPlaysResponse.status} ${recentPlaysResponse.statusText}`);
-                        recentPlaysSection.classList.add('hidden');
-                    } else {
-                        if (allRecentPlays.length > 0) {
-                            recentPlaysSection.classList.remove('hidden');
-                            currentRecentPlaysIndex = 0; // Reset index
-                            await renderPlayCards(allRecentPlays, recentPlaysDiv, user.user_id, user.username, currentRecentPlaysIndex, PLAYS_PER_LOAD);
-                            if (allRecentPlays.length > PLAYS_PER_LOAD) {
-                                loadMoreRecentPlaysButton.classList.remove('hidden');
-                            } else {
-                                loadMoreRecentPlaysButton.classList.add('hidden');
-                            }
+                    if (allRecentPlays && allRecentPlays.length > 0) {
+                        recentPlaysSection.classList.remove('hidden');
+                        await renderPlayCards(allRecentPlays, recentPlaysDiv, user.user_id, user.username, currentRecentPlaysIndex, PLAYS_PER_LOAD);
+                        currentRecentPlaysIndex += PLAYS_PER_LOAD;
+
+                        if (allRecentPlays.length > PLAYS_PER_LOAD) {
+                            fadeInElement(loadMoreRecentPlaysButton);
                         } else {
-                            recentPlaysSection.classList.add('hidden');
+                            fadeOutElement(loadMoreRecentPlaysButton); // Ensure hidden if no more plays
                         }
+                    } else {
+                        recentPlaysSection.classList.add('hidden');
+                        recentPlaysDiv.innerHTML = '<p class="text-center text-zinc-400">No recent plays found.</p>';
+                        fadeOutElement(loadMoreRecentPlaysButton); // Ensure hidden
                     }
+
+                    clearError();
 
                 } catch (error) {
-                    console.error('Error fetching user data or plays:', error);
-                    displayError('Failed to fetch data. Please check your internet connection or try again later.');
+                    console.error('Error fetching user data:', error);
+                    displayError('An error occurred while fetching user data. Please try again.');
                 } finally {
                     hideLoading();
                 }
             }
 
-            // Event listener for the search button
+            // Event listeners
             searchButton.addEventListener('click', fetchUserData);
-
-            // Event listeners for "Load More" buttons
-            loadMoreBestPlaysButton.addEventListener('click', () => {
-                const username = usernameInput.value.trim();
-                const user = allBestPlays.length > 0 ? allBestPlays[0] : null; // Get user ID from the first play
-                if (user) {
-                    loadMorePlays('best', user.user_id, username);
-                }
-            });
-
-            loadMoreRecentPlaysButton.addEventListener('click', () => {
-                const username = usernameInput.value.trim();
-                const user = allRecentPlays.length > 0 ? allRecentPlays[0] : null; // Get user ID from the first play
-                if (user) {
-                    loadMorePlays('recent', user.user_id, username);
-                }
-            });
-
-            // Optional: Allow searching by pressing Enter in the username input
             usernameInput.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     fetchUserData();
                 }
             });
+
+            // Using a single handler for both load more buttons
+            loadMoreBestPlaysButton.addEventListener('click', () => {
+                if (currentUser) {
+                    loadMorePlays('best', currentUser.user_id, currentUser.username);
+                } else {
+                    console.error("User data not available for loading more best plays.");
+                }
+            });
+
+            loadMoreRecentPlaysButton.addEventListener('click', () => {
+                if (currentUser) {
+                    loadMorePlays('recent', currentUser.user_id, currentUser.username);
+                } else {
+                    console.error("User data not available for loading more recent plays.");
+                }
+            });
+
+            // Initialize Lucide icons on page load
+            lucide.createIcons();
         });
     </script>
 </body>
