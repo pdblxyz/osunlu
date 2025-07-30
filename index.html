@@ -6,8 +6,9 @@
     <title>osu! User Lookup</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons CDN -->
+    <!-- Lucide Icons CDN (still used for download buttons) -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter (for general text) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -33,8 +34,8 @@
         .icon {
             display: inline-block;
             vertical-align: middle;
-            width: 1.25em; /* Adjust icon size relative to font-size */
-            height: 1.25em;
+            width: 1em; /* Reduced icon size */
+            height: 1em; /* Reduced icon size */
             stroke-width: 2; /* Adjust stroke thickness */
             stroke: currentColor;
             fill: none;
@@ -74,7 +75,7 @@
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-zinc-900 p-8 rounded-xl shadow-2xl w-full max-w-2xl border border-zinc-700">
+    <div class="bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-4xl border border-zinc-700">
         <h1 class="text-4xl font-bold text-center mb-8 text-zinc-300">osu! User Lookup</h1>
 
         <div class="mb-6">
@@ -104,7 +105,7 @@
             <!-- Error messages will be displayed here -->
         </div>
 
-        <div id="userInfo" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-zinc-200">
+        <div id="userInfo" class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- User information will be displayed here -->
         </div>
 
@@ -118,7 +119,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Your osu! API Key (v1)
+            // Your osu! API Key (v1) for general user data and best plays.
+            // IMPORTANT: This key has been updated with the one you provided.
             const OSU_API_KEY = "9b5e32c38abbac978fd95dc322fadb7c7be07b53";
 
             const usernameInput = document.getElementById('usernameInput');
@@ -132,17 +134,14 @@
             // Helper function to convert mod bitmask to readable string
             function getModString(enabledMods) {
                 const mods = {
-                    // Standard mods
                     1: 'NF', 2: 'EZ', 4: 'TD', 8: 'HD', 16: 'HR', 32: 'SD', 64: 'DT', 128: 'RX',
                     256: 'HT', 512: 'NC', 1024: 'FL', 2048: 'AP', 4096: 'SO', 8192: 'AT',
-                    16384: 'PF', 32768: 'V2',
-                    // Mania specific mods
-                    65536: 'MR', 131072: '1K', 262144: '2K', 524288: '3K', 1048576: '4K',
-                    2097152: '5K', 4194304: '6K', 8388608: '7K', 16777216: '8K',
-                    33554432: 'FI', 67108864: 'RD', 134217728: 'LM', 268435456: '9K',
-                    536870912: 'CO', 1073741824: '10K', 2147483648: 'FD',
-                    4294967296: 'CN', 8589934592: 'TG', 17179869184: 'DA',
-                    34359738368: 'DC', 68719476736: 'LS'
+                    16384: 'PF', 32768: 'V2', 65536: 'MR', 131072: '1K', 262144: '2K',
+                    524288: '3K', 1048576: '4K', 2097152: '5K', 4194304: '6K',
+                    8388608: '7K', 16777216: '8K', 33554432: 'FI', 67108864: 'RD',
+                    134217728: 'LM', 268435456: '9K', 536870912: 'CO', 1073741824: '10K',
+                    2147483648: 'FD', 4294967296: 'CN', 8589934592: 'TG',
+                    17179869184: 'DA', 34359738368: 'DC', 68719476736: 'LS'
                 };
                 let modString = '';
                 for (const bit in mods) {
@@ -153,41 +152,36 @@
                 return modString || 'None';
             }
 
-            // Function to display error messages
             function displayError(message) {
                 errorMessage.textContent = message;
                 errorMessage.classList.remove('hidden');
-                userInfoDiv.innerHTML = ''; // Clear previous user info
-                bestPlaysSection.classList.add('hidden'); // Hide best plays section
+                userInfoDiv.innerHTML = '';
+                bestPlaysSection.classList.add('hidden');
             }
 
-            // Function to clear error messages
             function clearError() {
                 errorMessage.classList.add('hidden');
                 errorMessage.textContent = '';
             }
 
-            // Function to show loading indicator
             function showLoading() {
                 loadingIndicator.classList.remove('hidden');
-                searchButton.disabled = true; // Disable button during loading
+                searchButton.disabled = true;
                 searchButton.classList.add('opacity-50', 'cursor-not-allowed');
                 clearError();
-                userInfoDiv.innerHTML = ''; // Clear previous user info
-                bestPlaysDiv.innerHTML = ''; // Clear previous best plays
-                bestPlaysSection.classList.add('hidden'); // Hide best plays section
+                userInfoDiv.innerHTML = '';
+                bestPlaysDiv.innerHTML = '';
+                bestPlaysSection.classList.add('hidden');
             }
 
-            // Function to hide loading indicator
             function hideLoading() {
                 loadingIndicator.classList.add('hidden');
-                searchButton.disabled = false; // Enable button after loading
+                searchButton.disabled = false;
                 searchButton.classList.remove('opacity-50', 'cursor-not-allowed');
             }
 
-            // Function to download replay
             async function downloadReplay(beatmapId, userId, mode, username, beatmapName) {
-                showLoading(); // Show loading indicator for replay download
+                showLoading();
                 try {
                     const replayApiUrl = `https://osu.ppy.sh/api/get_replay?k=${OSU_API_KEY}&m=${mode}&b=${beatmapId}&u=${userId}&type=string`;
                     const response = await fetch(replayApiUrl);
@@ -197,14 +191,13 @@
                         return;
                     }
 
-                    // The API returns base64 encoded replay data
                     const data = await response.json();
                     if (!data || !data.content) {
                         displayError(`Replay data not found for ${beatmapName}.`);
                         return;
                     }
 
-                    const replayContent = atob(data.content); // Decode base64
+                    const replayContent = atob(data.content);
                     const byteCharacters = new Uint8Array(replayContent.length);
                     for (let i = 0; i < replayContent.length; i++) {
                         byteCharacters[i] = replayContent.charCodeAt(i);
@@ -218,37 +211,32 @@
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
-                    URL.revokeObjectURL(url); // Clean up the object URL
+                    URL.revokeObjectURL(url);
 
                 } catch (error) {
                     console.error('Error downloading replay:', error);
                     displayError(`Error downloading replay for ${beatmapName}.`);
                 } finally {
-                    hideLoading(); // Hide loading indicator
+                    hideLoading();
                 }
             }
 
-            // Function to download beatmap
             function downloadBeatmap(beatmapId, beatmapName) {
-                // osu! beatmaps are typically downloaded from a direct URL
-                // The format is usually https://osu.ppy.sh/osu/<beatmap_id>
                 const downloadUrl = `https://osu.ppy.sh/osu/${beatmapId}`;
-
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = `${beatmapName}.osu`; // Suggest a filename
+                a.download = `${beatmapName}.osu`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
             }
 
-
-            // Function to fetch user data and best plays from osu! API
+            // Function to fetch user data and best plays from osu! API v1
             async function fetchUserData() {
                 const username = usernameInput.value.trim();
 
-                if (!OSU_API_KEY) {
-                    displayError('API Key is missing. Please ensure it is correctly set in the code.');
+                if (!OSU_API_KEY || OSU_API_KEY === "YOUR_OSU_API_KEY_HERE") {
+                    displayError('Please set your osu! API Key (v1) in the JavaScript code to enable search functionality. You can get one from https://osu.ppy.sh/p/api');
                     return;
                 }
                 if (!username) {
@@ -259,7 +247,7 @@
                 showLoading();
 
                 try {
-                    // Fetch user details
+                    // Fetch user details using API v1
                     const userApiUrl = `https://osu.ppy.sh/api/get_user?k=${OSU_API_KEY}&u=${username}&type=string`;
                     const userResponse = await fetch(userApiUrl);
                     const userData = await userResponse.json();
@@ -279,35 +267,35 @@
                     const user = userData[0];
                     const profilePictureUrl = `https://a.ppy.sh/${user.user_id}`;
 
-                    // Display user information
+                    // Display user information - Simplified to match image_d067e6.png
                     userInfoDiv.innerHTML = `
                         <div class="bg-zinc-800 p-6 rounded-lg shadow-md border border-zinc-700 col-span-1 md:col-span-2 flex flex-col items-center">
                             <img src="${profilePictureUrl}" alt="${user.username}'s profile picture"
                                  class="w-32 h-32 rounded-full border-4 border-zinc-600 mb-4 object-cover"
                                  onerror="this.onerror=null; this.src='https://placehold.co/128x128/3f3f46/d4d4d8?text=No+Image';">
                             <h2 class="text-3xl font-bold text-zinc-300 mb-2 text-center">${user.username}</h2>
-                            <p class="text-sm text-zinc-400"><i data-lucide="user"></i> User ID: <span class="font-semibold text-zinc-200">${user.user_id}</span></p>
+                            <p class="text-sm text-zinc-400">User ID: <span class="font-semibold text-zinc-200">${user.user_id}</span></p>
                         </div>
                         <div class="bg-zinc-800 p-4 rounded-lg shadow-md border border-zinc-700">
-                            <p class="text-lg"><i data-lucide="trophy" class="icon text-purple-300"></i> <strong class="text-purple-300">Rank:</strong> <span class="text-zinc-200">#${user.pp_rank}</span> (<span class="text-zinc-400">${user.country}#${user.pp_country_rank}</span>)</p>
-                            <p class="text-lg"><i data-lucide="star" class="icon text-yellow-300"></i> <strong class="text-yellow-300">Performance Points (PP):</strong> <span class="text-zinc-200">${parseFloat(user.pp_raw).toFixed(2)}</span></p>
-                            <p class="text-lg"><i data-lucide="target" class="icon text-green-300"></i> <strong class="text-green-300">Accuracy:</strong> <span class="text-zinc-200">${parseFloat(user.accuracy).toFixed(2)}%</span></p>
+                            <p class="text-lg"><strong style="color: #0280BA;">Rank:</strong> <span class="text-zinc-200">#${user.pp_rank}</span> (<span class="text-zinc-400">${user.country}#${user.pp_country_rank}</span>)</p>
+                            <p class="text-lg"><strong style="color: #4EB604;">Performance Points (PP):</strong> <span class="text-zinc-200">${parseFloat(user.pp_raw).toFixed(2)}</span></p>
+                            <p class="text-lg"><strong style="color: #4EB604;">Accuracy:</strong> <span class="text-zinc-200">${parseFloat(user.accuracy).toFixed(2)}%</span></p>
                         </div>
                         <div class="bg-zinc-800 p-4 rounded-lg shadow-md border border-zinc-700">
-                            <p class="text-lg"><i data-lucide="gamepad" class="icon text-blue-300"></i> <strong class="text-blue-300">Playcount:</strong> <span class="text-zinc-200">${user.playcount}</span></p>
-                            <p class="text-lg"><i data-lucide="bar-chart-2" class="icon text-cyan-300"></i> <strong class="text-cyan-300">Level:</strong> <span class="text-zinc-200">${parseFloat(user.level).toFixed(2)}</span></p>
-                            <p class="text-lg"><i data-lucide="medal" class="icon text-orange-300"></i> <strong class="text-orange-300">Total Score:</strong> <span class="text-zinc-200">${user.total_score}</span></p>
+                            <p class="text-lg"><strong class="text-yellow-400">Playcount:</strong> <span class="text-zinc-200">${user.playcount}</span></p>
+                            <p class="text-lg"><strong class="text-yellow-400">Level:</strong> <span class="text-zinc-200">${parseFloat(user.level).toFixed(2)}</span></p>
+                            <p class="text-lg"><strong class="text-yellow-400">Total Score:</strong> <span class="text-zinc-200">${user.total_score}</span></p>
                         </div>
                         <div class="bg-zinc-800 p-4 rounded-lg shadow-md border border-zinc-700">
-                            <p class="text-lg"><i data-lucide="award" class="icon text-fuchsia-300"></i> <strong class="text-fuchsia-300">Ranked Score:</strong> <span class="text-zinc-200">${user.ranked_score}</span></p>
-                            <p class="text-lg"><i data-lucide="gem" class="icon text-sky-300"></i> <strong class="text-sky-300">SS Count:</strong> <span class="text-zinc-200">${user.count_rank_ss}</span></p>
-                            <p class="text-lg"><i data-lucide="star" class="icon text-lime-300"></i> <strong class="text-lime-300">S Count:</strong> <span class="text-zinc-200">${user.count_rank_s}</span></p>
-                            <p class="text-lg"><i data-lucide="check-circle" class="icon text-rose-300"></i> <strong class="text-rose-300">A Count:</strong> <span class="text-zinc-200">${user.count_rank_a}</span></p>
+                            <p class="text-lg"><strong style="color: #0280BA;">Ranked Score:</strong> <span class="text-zinc-200">${user.ranked_score}</span></p>
+                            <p class="text-lg"><strong class="text-yellow-400">SS Count:</strong> <span class="text-zinc-200">${user.count_rank_ss}</span></p>
+                            <p class="text-lg"><strong class="text-yellow-600">S Count:</strong> <span class="text-zinc-200">${user.count_rank_s}</span></p>
+                            <p class="text-lg"><strong style="color: #4EB604;">A Count:</strong> <span class="text-zinc-200">${user.count_rank_a}</span></p>
                         </div>
                         <div class="bg-zinc-800 p-4 rounded-lg shadow-md border border-zinc-700">
-                            <p class="text-lg"><i data-lucide="calendar" class="icon text-emerald-300"></i> <strong class="text-emerald-300">Join Date:</strong> <span class="text-zinc-200">${user.join_date}</span></p>
-                            <p class="text-lg"><i data-lucide="globe" class="icon text-indigo-300"></i> <strong class="text-indigo-300">Country:</strong> <span class="text-zinc-200">${user.country}</span></p>
-                            <p class="text-lg"><i data-lucide="activity" class="icon text-red-300"></i> <strong class="text-red-300">Total Hits:</strong> <span class="text-zinc-200">${parseInt(user.count300) + parseInt(user.count100) + parseInt(user.count50)}</span></p>
+                            <p class="text-lg"><strong class="text-red-500">Join Date:</strong> <span class="text-zinc-200">${user.join_date}</span></p>
+                            <p class="text-lg"><strong class="text-red-500">Country:</strong> <span class="text-zinc-200">${user.country}</span></p>
+                            <p class="text-lg"><strong class="text-red-500">Total Hits:</strong> <span class="text-zinc-200">${parseInt(user.count300) + parseInt(user.count100) + parseInt(user.count50)}</span></p>
                         </div>
                     `;
 
@@ -324,10 +312,9 @@
 
                     if (bestPlaysData.length > 0) {
                         bestPlaysSection.classList.remove('hidden');
-                        bestPlaysDiv.innerHTML = ''; // Clear previous best plays
+                        bestPlaysDiv.innerHTML = '';
 
                         for (const play of bestPlaysData) {
-                            // Fetch beatmap details for each play to get map name and beatmapset_id for background
                             const beatmapApiUrl = `https://osu.ppy.sh/api/get_beatmaps?k=${OSU_API_KEY}&b=${play.beatmap_id}`;
                             const beatmapResponse = await fetch(beatmapApiUrl);
                             const beatmapData = await beatmapResponse.json();
@@ -337,7 +324,6 @@
                             if (beatmapData && beatmapData.length > 0) {
                                 const beatmap = beatmapData[0];
                                 beatmapTitle = `${beatmap.artist} - ${beatmap.title} [${beatmap.version}]`;
-                                // Construct the background image URL
                                 if (beatmap.beatmapset_id) {
                                     beatmapsetBgUrl = `https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`;
                                 }
@@ -345,41 +331,53 @@
 
                             const modString = getModString(parseInt(play.enabled_mods));
 
+                            // Calculate accuracy for the individual play
+                            const count300 = parseInt(play.count300);
+                            const count100 = parseInt(play.count100);
+                            const count50 = parseInt(play.count50);
+                            const countmiss = parseInt(play.countmiss);
+
+                            let calculatedAccuracy = 'N/A';
+                            const totalHits = count300 + count100 + count50 + countmiss;
+                            if (totalHits > 0) {
+                                calculatedAccuracy = ((300 * count300 + 100 * count100 + 50 * count50) / (300 * totalHits) * 100).toFixed(2);
+                            }
+
+
                             const playElement = document.createElement('div');
                             playElement.className = 'play-card-with-bg rounded-lg shadow-md border border-zinc-700';
 
-                            // Add the blurred background overlay
                             const bgOverlay = document.createElement('div');
                             bgOverlay.className = 'play-card-background-overlay';
                             if (beatmapsetBgUrl) {
                                 bgOverlay.style.backgroundImage = `url('${beatmapsetBgUrl}')`;
-                                // Fallback for broken images
                                 bgOverlay.onerror = () => { bgOverlay.style.backgroundImage = 'none'; };
                             }
                             playElement.appendChild(bgOverlay);
 
-                            // Add the content container
                             const contentDiv = document.createElement('div');
                             contentDiv.className = 'play-card-content flex flex-col md:flex-row justify-between items-start md:items-center';
                             contentDiv.innerHTML = `
                                 <div class="flex-grow mb-4 md:mb-0">
-                                    <h3 class="text-xl font-semibold text-blue-300 mb-1">${beatmapTitle}</h3>
-                                    <p class="text-md text-zinc-300"><i data-lucide="star" class="icon text-yellow-300"></i> <strong class="text-yellow-300">PP:</strong> <span class="text-zinc-200">${parseFloat(play.pp).toFixed(2)}</span></p>
-                                    <p class="text-md text-zinc-300"><i data-lucide="target" class="icon text-green-300"></i> <strong class="text-green-300">Accuracy:</strong> <span class="text-zinc-200">${parseFloat(play.accuracy).toFixed(2)}%</span></p>
-                                    <p class="text-md text-zinc-300"><i data-lucide="medal" class="icon text-orange-300"></i> <strong class="text-orange-300">Score:</strong> <span class="text-zinc-200">${play.score}</span></p>
-                                    <p class="text-md text-zinc-300"><i data-lucide="settings" class="icon text-purple-300"></i> <strong class="text-purple-300">Mods:</strong> <span class="text-zinc-200">${modString}</span></p>
-                                    <p class="text-md text-zinc-300"><i data-lucide="calendar" class="icon text-emerald-300"></i> <strong class="text-emerald-300">Date:</strong> <span class="text-zinc-200">${play.date}</span></p>
+                                    <h3 class="text-xl font-bold text-zinc-100 mb-1">${beatmapTitle}</h3>
+                                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-md text-zinc-300">
+                                        <span><strong class="text-zinc-300">PP:</strong> <span class="text-zinc-200">${parseFloat(play.pp).toFixed(2)}</span></span>
+                                        <span><strong style="color: #4EB604;">Accuracy:</strong> <span class="text-zinc-200">${calculatedAccuracy}%</span></span>
+                                        <span><strong class="text-zinc-300">Score:</strong> <span class="text-zinc-200">${play.score}</span></span>
+                                        <span><strong class="text-zinc-300">Mods:</strong> <span class="text-zinc-200">${modString}</span></span>
+                                        <span><strong class="text-zinc-300">Date:</strong> <span class="text-zinc-200">${play.date}</span></span>
+                                    </div>
                                 </div>
                                 <div class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:space-x-2">
                                     <button
-                                        class="download-beatmap-button bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105 shadow-lg w-full md:w-auto"
+                                        class="download-beatmap-button bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105 shadow-lg w-full md:w-auto text-sm flex items-center justify-start"
                                         data-beatmap-id="${play.beatmap_id}"
                                         data-beatmap-name="${beatmapTitle}"
                                     >
                                         <i data-lucide="download" class="icon inline-block mr-2"></i> Beatmap
                                     </button>
                                     <button
-                                        class="download-replay-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105 shadow-lg w-full md:w-auto"
+                                        class="download-replay-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105 shadow-lg w-full md:w-auto text-sm flex items-center justify-start"
                                         data-beatmap-id="${play.beatmap_id}"
                                         data-user-id="${user.user_id}"
                                         data-mode="${play.mode}"
@@ -394,10 +392,8 @@
                             bestPlaysDiv.appendChild(playElement);
                         }
 
-                        // After all elements are added, call lucide.createIcons()
                         lucide.createIcons();
 
-                        // Add event listeners to download buttons after they are added to DOM
                         document.querySelectorAll('.download-replay-button').forEach(button => {
                             button.addEventListener('click', (event) => {
                                 const btn = event.target.closest('button');
